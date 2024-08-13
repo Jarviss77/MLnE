@@ -149,6 +149,11 @@ def run(
         run(source='data/videos/example.mp4', weights='yolov5s.pt', conf_thres=0.4, device='0')
         ```
     """
+
+    # CUSTOM VARS
+    search_object = "cell phone"
+    confidence_thres = 0.5
+
     source = str(source)
     save_img = not nosave and not source.endswith(".txt")  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
@@ -247,6 +252,7 @@ def run(
                 writer.writerow(data)
 
         # Process predictions
+        flag = 0
         for i, det in enumerate(pred):  # per image
             seen += 1
             frame_labels = []
@@ -281,9 +287,16 @@ def run(
                     confidence_str = f"{confidence:.2f}"
 
                     """if save_csv:"""
-                    frame_labels.append(label)
+                    """ frame_labels.append(label)
                     print(f"Name: {p.name}, Label: {label}, Confidence: {confidence_str}")
-                    write_to_csv(p.name, label, confidence_str)
+                    write_to_csv(p.name, label, confidence_str)"""
+
+                    if flag or (search_object == label and confidence>=confidence_thres) :
+                        print(f"Index of {search_object} is {c}")
+                        flag = 1
+
+
+
 
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -326,9 +339,11 @@ def run(
                         save_path = str(Path(save_path).with_suffix(".mp4"))  # force *.mp4 suffix on results videos
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
                     vid_writer[i].write(im0)
+            if not flag:
+                print(f"{search_object} not found")
 
         # Print time (inference-only)
-        LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
+        #LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
 
     # Print results
     t = tuple(x.t / seen * 1e3 for x in dt)  # speeds per image
